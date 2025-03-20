@@ -48,12 +48,7 @@ def network(problem, m,N_points):
                 tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(1000, activation="ReLU"),
                 tf.keras.layers.Dense(1000, activation="ReLU"),
-                # tf.keras.layers.Dropout(0.5),
-                # tf.keras.layers.Dense(1000, activation="ReLU"),
-                # tf.keras.layers.Dense(1000, activation="ReLU"),
-                # tf.keras.layers.Dense(500, activation="ReLU"),
-                # tf.keras.layers.Dense(200, activation="ReLU"),
-                # tf.keras.layers.Dropout(0.5),
+                
                 tf.keras.layers.Dense(200*173),
               
                 #tf.keras.layers.Reshape((47,50)),
@@ -65,45 +60,12 @@ def network(problem, m,N_points):
 
         branch=[200*173*47,branch]
        
-        # trunk =  tf.keras.Sequential(
-        #     [
-        #         tf.keras.layers.InputLayer(input_shape=(100,)),
-        #         tf.keras.layers.Flatten(),
-        #         # tf.keras.layers.Dense(128, activation="relu"),
-        #         tf.keras.layers.Dense(200),
-        #         # tf.keras.layers.Dense(500),
-        #     ]
-        # )
-        # trunk.summary()
+      
         trunk=[1,128,256,512,512,1024,2048,4096,2048,50*47]
 
 
 
-
-
-        dot= tf.keras.Sequential(
-        [   tf.keras.layers.InputLayer(input_shape=(87*24,2,)),
-            # tf.keras.layers.Reshape((2,200, 1)),
-            # # tf.keras.layers.Dense(1000, activation="relu"),
-            # # tf.keras.layers.Dense(581248, activation="relu"),
-            # # tf.keras.layers.Reshape((38,239,64)),
-            # # tf.keras.layers.Conv2D(64, (5, 5), strides=2, activation="relu"),
-            # tf.keras.layers.Conv2DTranspose(filters=64, kernel_size=[2,2], strides=[5,5], activation="relu",padding="valid",data_format='channels_last'),
-            # tf.keras.layers.Conv2D(filters=1, kernel_size=[1,1], strides=[1,1], activation="relu",padding="valid",data_format='channels_last'),
-            tf.keras.layers.Flatten(),   
-            # tf.keras.layers.Dense(1000, activation="relu"),
-            # # tf.keras.layers.Dense(1000, activation="relu"),
-            # tf.keras.layers.Dropout(0.5),
-            # tf.keras.layers.Dense(87*24*1, activation="ReLU"),
-            # tf.keras.layers.Dropout(0.5),
-            # tf.keras.layers.Dense(87*24*100),
-            # tf.keras.layers.Reshape((87*24,100)),
-
-        ]
-      )
-    dot.summary()
-    dot=[0,dot]
-    return branch,trunk,dot
+    return branch,trunk
 
 def get_data():
     
@@ -242,182 +204,10 @@ def main():
     checker = dde.callbacks.ModelCheckpoint(
         dataframe+"/model.ckpt", save_better_only=False, period=1000
     )
-    # losshistory, train_state = model.train(epochs=30000, batch_size=None,display_every=50,callbacks=[checker],model_save_path=dataframe
-    # )  
-    # dde.saveplot(losshistory, train_state,issave=True,isplot=True,loss_fname=dataframe+"/loss.dat")
+    losshistory, train_state = model.train(epochs=30000, batch_size=None,display_every=50,callbacks=[checker],model_save_path=dataframe
+)  
+    dde.saveplot(losshistory, train_state,issave=True,isplot=True,loss_fname=dataframe+"/loss.dat")
 
-
-
-
-
-    model.restore(dataframe+"/model.ckpt-30000.ckpt")
-    real_2d=np.transpose(real_2d,(0,2,1,3))
-    real_2d=np.reshape(real_2d,(-1,200*173,2))
-    rows = 173
-    cols = 200
-
-    # 定义网格的范围
-    x_min = 0
-    x_max = 200
-    y_min = 0
-    y_max = 173
-
-    # 在x和y范围内生成均匀分布的网格点
-    x = np.linspace(x_min, x_max, cols)
-    y = np.linspace(y_min, y_max, rows)
-
-    # 创建一个二维数组，其中每个元素都是一个包含x和y坐标的元组
-    y = np.array([(x_val, y_val) for y_val in y for x_val in x])
-
-    # y=np.zeros((100*87,2))
-    
-    # xy=np.load('data_xy_5.npy').astype(np.float32)
-    # xy=np.log10(xy)
-    dkxs_s=np.load('data_gen/data_dkzs.npy').astype(np.float32)[[0,1,3,4]].reshape((-1))[:172]
-    dkxs_s_test=np.load('data_gen/data_dkzs.npy').astype(np.float32)[[2]].reshape((-1))[:172]
-    now="test"
-    if now=="train":
-        real_2d=real_2d[[0,1,3,4]]
-        # y[0]=(io.loadmat('data_0605/database/stat_Re180.mat')['y'].reshape((200,)))[:100]*182.088
-        # y[1]=(io.loadmat('data_0605/database/stat_Re550.mat')['y'].reshape((200,)))[:100]*543.496 
-        # y[2]=(io.loadmat('data_0605/database/stat_Re2000.mat')['y'].reshape((200,))) [:100]*1994.756 
-        # y[3]=(io.loadmat('data_0605/database/stat_Re5200.mat')['y'].reshape((200,)))[:100]*5185.897 
-        # y=np.arange(0,100*87).reshape((1,100*87))
-        label_train = model.predict(trunk_out_input)
-        # label_train=scaler_uum.inverse_transform(label_train)
-        # np.save('data_show/q.npy',q)
-        # np.save('data_show/n.npy',n)
-        # np.save('data_show/label_train.npy',label_train)
-        # np.save('data_show/x1.npy',x1)
-        # np.save('data_show/x_sum1.npy',x_sum1)
-        # np.save('data_show/x_sum2.npy',x_sum2)
-        # np.save('data_show/x_sum3.npy',x_sum3)
-        # np.save('data_show/x_1.Anpy',x_1)
-        
-        # for i in range(100):
-        #     np.savetxt('q_1_'+str(i)+'.dat',q[1,i])
-        # branch_out=np.reshape(n,(-1,2088))
-        # label_train=scaler.inverse_transform(label_train)
-        label_train=np.reshape(label_train,(-1,173*200))
-        label_train=np.transpose(label_train)
-        uum=np.transpose(uum)
-        error=np.abs(label_train-uum)
-        # y=np.transpose(y)
-        for i in range(4): 
-            result=np.hstack((real_2d[i].reshape((200*173,2)),label_train[:200*173,i].reshape((200*173,1)),uum[:200*173,i].reshape((200*173,1)),error[:200*173,i].reshape((200*173,1))))
-            #result=np.hstack((y.reshape((47*173,2)),label_train[:47*173,i].reshape((47*173,1))))
-            np.savetxt(dataframe+'/Euukc_new_6_train_'+str(i)+'.dat',result)
-            # np.savetxt(dataframe+'/loss2'+str(i)+'_branch_w100.dat',branch_out[i])
-            with open(dataframe+'/Euukc_new_6_train_'+str(i)+'.dat', 'r') as file :
-                filedata = file.read()
-
-        # 创建新的行
-            newline = 'VARIABLES="x","y","u",up","error"'+'\n'+'ZONE I=200,J=173'+'\n'
-            #newline = 'VARIABLES="x","y","u"'+'\n'+'ZONE I=47,J=173'+'\n'
-
-            # 把新的行加入到原文件内容之前
-            filedata = newline + filedata
-
-            # 写回文件，注意使用'w'模式，它将覆盖原文件内容
-            with open(dataframe+'/Euukc_new_6_train_'+str(i)+'.dat', 'w') as file:
-                file.write(filedata)
-
-        #积分
-        label_train=np.transpose(label_train).reshape((-1,173,200))
-        kzs_train=kzs[[0,1,3,4]].reshape((-1,173,1))
-        label_train=label_train/kzs_train
-        uum=np.transpose(uum)
-        uum=uum.reshape((-1,173,200))
-        uum=uum/kzs_train
-
-        label_train=np.reshape(label_train,(-1,173,200))
-        label_train=np.transpose(label_train,(0,2,1)).reshape((-1,173))
-        label_train_1=label_train[:,:-1]
-        label_train_2=label_train[:,1:]
-        label_train_sum=(label_train_1+label_train_2).reshape((-1,200,172))
-        label_profile=(label_train_sum*dkxs_s*0.5).sum(axis=2).transpose()
-
-        uum=np.reshape(uum,(-1,173))
-        uum=np.reshape(uum,(-1,173,200))
-        uum=np.transpose(uum,(0,2,1)).reshape((-1,173))
-        uum_1=uum[:,:-1]                                                                                                              
-        uum_2=uum[:,1:]
-        uum_sum=(uum_1+uum_2).reshape((-1,200,172))
-        uum_profile=(uum_sum*dkxs_s*0.5).sum(axis=2).transpose()
-         
-        yy=np.transpose(yy)
-        
-        for i in range(6): 
-            result=np.hstack((yy[:200,i].reshape((200,1)),label_profile[:200,i].reshape((200,1)),uum_profile[:200,i].reshape((200,1))))
-            np.savetxt(dataframe+'/2loss1_7_train'+str(i)+'.dat',result)
-
-
-        
-
-    else:
-
-        # y[0]=(io.loadmat('data_0605/database/stat_Re1000.mat')['y'].reshape((200,)))[:100]*1000.512  
-
-        # y=np.arange(0,100*87).reshape((1,100*87))
-    
-    
-        real_2d=real_2d[[2]]
-        label_pre = model.predict(trunk_out_input_test)
-        # label_pre=scaler_uum.inverse_transform(label_pre)
-        label_pre=np.reshape(label_pre,(-1,173*200))
-        label_pre=np.transpose(label_pre)
-        
-        uum_test=np.transpose(uum_test)
-     
-        error=np.abs(label_pre-uum_test)
-
-
-        for i in range(1): 
-            
-            #result=np.hstack((y.reshape((47*173,2)),label_pre[:47*173,i].reshape((47*173,1))))
-            result=np.hstack((real_2d[i].reshape((200*173,2)),label_pre[:200*173,i].reshape((200*173,1)),uum_test[:200*173,i].reshape((200*173,1)),error[:200*173,i].reshape((200*173,1))))
-            np.savetxt(dataframe+'/Euukc_new_6_test'+str(i)+'.dat',result)
-            with open(dataframe+'/Euukc_new_6_test'+str(i)+'.dat', 'r') as file :
-                filedata = file.read()
-
-        # 创建新的行
-            newline = 'VARIABLES="x","y","u","u_p","u_r"'+'\n'+'ZONE I=200,J=173'+'\n'
-            #newline = 'VARIABLES="x","y","u"'+'\n'+'ZONE I=47,J=173'+'\n'
-            # 把新的行加入到原文件内容之前
-            filedata = newline + filedata
-
-            # 写回文件，注意使用'w'模式，它将覆盖原文件内容
-            with open(dataframe+'/Euukc_new_6_test'+str(i)+'.dat', 'w') as file:
-                file.write(filedata)
-    
-        #积分
-        label_pre=np.transpose(label_pre).reshape((-1,173,200))
-        kzs_test=kzs[[2]].reshape((-1,173,1))
-        label_pre=label_pre/kzs_test
-        uum_test=np.transpose(uum_test)
-        uum_test=uum_test.reshape((-1,173,200))
-        uum_test=uum_test/kzs_test
-
-        label_pre=np.reshape(label_pre,(-1,173))
-        label_pre=np.reshape(label_pre,(-1,173,200))
-        label_pre=np.transpose(label_pre,(0,2,1)).reshape((-1,173))
-        label_pre_1=label_pre[:,:-1]
-        label_pre_2=label_pre[:,1:]
-        label_pre_sum=(label_pre_1+label_pre_2).reshape((-1,200,172))
-        label_profile=(label_pre_sum*dkxs_s_test*0.5).sum(axis=2).transpose()
-
-        uum_test=np.reshape(uum_test,(-1,173))
-        uum_test=np.reshape(uum_test,(-1,173,200))
-        uum_test=np.transpose(uum_test,(0,2,1)).reshape((-1,173))
-        uum_test_1=uum_test[:,:-1]
-        uum_test_2=uum_test[:,1:]
-        uum_test_sum=(uum_test_1+uum_test_2).reshape((-1,200,172))
-        uum_profile=(uum_test_sum*dkxs_s_test*0.5).sum(axis=2).transpose()
-        
-        yy_test=np.transpose(yy_test)
-        for i in range(1):
-            result=np.hstack((yy_test[:200,i].reshape((200,1)),label_profile[:200,i].reshape((200,1)),uum_profile[:200,i].reshape((200,1))))
-            np.savetxt(dataframe+'/2loss1_7_test'+str(i)+'.dat',result)
 
 
 if __name__ == "__main__":
