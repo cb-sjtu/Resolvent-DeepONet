@@ -1,4 +1,4 @@
-# resolvent-DeepONet
+# Resolvent-DeepONet
 
 All the codes are developed on basis of DEEPXDE(https://deepxde.readthedocs.io/en/latest/user/cite_deepxde.html).
 
