@@ -10,149 +10,20 @@ import tensorflow_addons as tfa
 import math
 from deepxde.nn.tensorflow_compat_v1.mionet import DeepONet_resolvent_jiami
 from deepxde.data.triple import Triple
+from getdata import get_data
+from network import network
+from postprocess import save_results
 
-def network(problem, m,N_points):
-    if problem == "ODE":
-        branch_1 = [m, 200, 200]
-        branch_2 = [N_points, 200, 200]
-        trunk = [1, 200, 200]
-    elif problem == "DR":
-        branch_1 = [m, 200, 200]
-        branch_2 = [m, 200, 200]
-        trunk = [2, 200, 200]
-    elif problem == "ADVD":
-        branch_1 = [m, 200, 200]
-        branch_2 = [m, 200, 200]
-        trunk = [2, 300, 300, 300]
-    elif problem == "flow":
-        branch = tf.keras.Sequential(
-            [
-                
-                tf.keras.layers.InputLayer(input_shape=(173*47*200)),
-                tf.keras.layers.Reshape((173,47,200)),
-                # tf.keras.layers.transpose,
-                tf.keras.layers.Conv2D(200, (3, 3), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(200, (3, 3), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(500, (3, 3), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(1000, (3, 3), strides=1, activation="ReLU"),
-                tf.keras.layers.Dropout(0.5),
-                # tf.keras.layers.Conv2D(1000, (1, 1), strides=1, activation="ReLU"),
-                # tf.keras.layers.Conv2D(500, (1, 1), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(100, (1, 1), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(10, (1, 1), strides=1, activation="ReLU"),
-                tf.keras.layers.Conv2D(1, (1, 1), strides=1, activation="ReLU"),
-                tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(1000, activation="ReLU"),
-                tf.keras.layers.Dense(1000, activation="ReLU"),
-                tf.keras.layers.Dropout(0.5),
-                # tf.keras.layers.Dense(1000, activation="ReLU"),
-                # tf.keras.layers.Dense(1000, activation="ReLU"),
-                tf.keras.layers.Dense(500, activation="ReLU"),
-                tf.keras.layers.Dense(200, activation="ReLU"),
-                tf.keras.layers.Dropout(0.5),
-                tf.keras.layers.Dense(47*50),
-              
-                tf.keras.layers.Reshape((47,50)),
-                # tf.keras.layers.Lambda(lambda x: transpose_last_two_dims(x))
-
-            ]
-        )
-        branch.summary()
-
-        branch=[m,branch]
-       
-        # trunk =  tf.keras.Sequential(
-        #     [
-        #         tf.keras.layers.InputLayer(input_shape=(100,)),
-        #         tf.keras.layers.Flatten(),
-        #         # tf.keras.layers.Dense(128, activation="relu"),
-        #         tf.keras.layers.Dense(200),
-        #         # tf.keras.layers.Dense(500),
-        #     ]
-        # )
-        # trunk.summary()
-        trunk=[1,128,256,512,512,1024,2048,4096,2048,50*47]
-
-
-    return branch,trunk
-
-def get_data():
-    
-    kzs=np.load('data_gen/data_kzs.npy').astype(np.float32).reshape((5,1,173))
-    uum=np.load('data_gen/data_um.npy').astype(np.float32)
-
-    uum=kzs*uum
-
-    uum_new=uum[[0,1,3,4],0:200].reshape((4,-1))
-    uum_new_test=uum[[2],0:200].reshape((1,-1))
-    
-    trunk_out=np.load('data_gen/data_motai.npy').astype(np.float32)[[0,1,3,4]].reshape((4,200,-1))
-    trunk_out_test=np.load('data_gen/data_motai.npy').astype(np.float32)[[2]].reshape((1,200,-1))
-    motai=trunk_out.transpose(0,2,1)
-    motai_test=trunk_out_test.transpose(0,2,1)
-    
-
-    for i in range(4):
-        scaler_Euuc = StandardScaler().fit(trunk_out[i])
-        std_Euuc = np.sqrt(scaler_Euuc.var_.astype(np.float32))
-        trunk_out[i]=(trunk_out[i]-scaler_Euuc.mean_.astype(np.float32))/std_Euuc
-    #np.save("data_gen/data_motai_zz.npy",trunk_out)
-    np.save("data_gen/data_motai_zz.npy",trunk_out)
-    for i in range(1):  
-        scaler_Euuc_test = StandardScaler().fit(trunk_out_test[i])
-        std_Euuc_test = np.sqrt(scaler_Euuc_test.var_.astype(np.float32))
-        trunk_out_test[i]=(trunk_out_test[i]-scaler_Euuc_test.mean_.astype(np.float32))/std_Euuc_test
-
-    kzs_s=kzs[[0,1,3,4]]
-    kzs_s[0]=2*math.pi/kzs_s[0]*182.088
-    kzs_s[1]=2*math.pi/kzs_s[1]*543.496
-    kzs_s[2]=2*math.pi/kzs_s[2]*1994.756
-    kzs_s[3]=2*math.pi/kzs_s[3]*5185.897
-    kzs_s_test=kzs[[2]]
-    kzs_s_test=2*math.pi/kzs_s_test*1000.512
-
-    dcPs_s=np.load('data_gen/data_dcps.npy').astype(np.float32)[[0,1,3,4]].reshape((-1,1,46))
-    dcPs_s_test=np.load('data_gen/data_dcps.npy').astype(np.float32)[[2]].reshape((-1,1,46))
- 
-    y=np.load('data_gen/data_yy.npy')
-    real_2d_y=y
-    real_2d_x=np.zeros((5,173))
-    real_2d_x[[0,1,3,4]]=kzs_s.reshape((4,173))
-    real_2d_x[2]=kzs_s_test.reshape((1,173))
-    
-    y[0]=y[0]*182.088
-    y[1]=y[1]*543.496
-    y[2]=y[2]*1000.512
-    y[3]=y[3]*1994.756
-    y[4]=y[4]*5185.897
-    y=y[[0,1,2,3,4]]
-    y_test=y[[2]]
-
-    real_2d=np.zeros((5,200,173,2))
-
-    for i in range(5):
-    # 如果y的长度大于100则裁剪，如果小于则重复直到100
-        real_2d_y_i = real_2d_y[i]
-        
-        repeats = 200 // real_2d_y_i.shape[0] + 1
-        real_2d_y_i = np.tile(real_2d_y_i, repeats)[:200]  # 重复直到100个
-        
-        # 填充坐标
-        for j in range(200):
-            real_2d[i, j, :, 0] = real_2d_x[i]  # 复制x坐标对该列
-            real_2d[i, j, :, 1] = real_2d_y_i[j]
-
-    
-    
-
-    return uum_new,uum_new_test,trunk_out, trunk_out_test,dcPs_s,dcPs_s_test,kzs_s,kzs_s_test,y,y_test,real_2d,kzs,motai,motai_test
 
 
 
 def main():
+    #初始化wandb
+   
     dataframe="model_Euukc_old_logl2"
     uum,uum_test,trunk_out, trunk_out_test, dcPs_s ,dcPs_s_test,lambda_z,lambda_z_test,yy,yy_test,real_2d,kzs,motai,motai_test = get_data()
+    kzs_test=kzs[[2]].reshape((-1,176,1))
+    kzs=kzs[[0,1,3,4]].reshape((-1,176,1))
     lambda_z=np.reshape(lambda_z,(-1,1)).astype(np.float32)
     lambda_z_test=np.reshape(lambda_z_test,(-1,1)).astype(np.float32)
     uum=np.reshape(uum,(-1,200,173)).transpose(0,2,1).reshape((-1,200*173))
@@ -201,7 +72,7 @@ def main():
 # andom_uniform
     model = dde.Model(data, net)
     model.compile("adam", lr=0.0001,
-        loss="def_l2_relative_error",
+        loss="mse",
         metrics=["l2 relative error"], 
         decay=("inverse time", 1, 1e-4))
     checker = dde.callbacks.ModelCheckpoint(
@@ -210,6 +81,14 @@ def main():
     losshistory, train_state = model.train(epochs=30000, batch_size=None,display_every=50,callbacks=[checker],model_save_path=dataframe
     )  
     dde.saveplot(losshistory, train_state,issave=True,isplot=True,loss_fname=dataframe+"/loss.dat")
+
+    # 后处理
+    model.restore(dataframe + "/model.ckpt-30000.ckpt")
+    label_train = model.predict(trunk_out_input)
+    save_results(dataframe, real_2d, label_train, uum, None, yy,kzs, mode="train")
+
+    label_test = model.predict(trunk_out_input_test)
+    save_results(dataframe, real_2d, label_test, uum_test, None, yy_test, kzs_test, mode="test")
 
 
 
